@@ -1,214 +1,188 @@
-# POS System Kuwait - MVP Edition
+# POS System Kuwait - MVP Edition (v2)
 
 ## Overview
-Professional Point of Sale system for Kuwaiti restaurants, built with Electron + React. Full Arabic RTL support, Kuwaiti Dinar (KWD) currency, and VAT 15% compliance.
+Professional Point of Sale system for Kuwaiti restaurants with modern glassmorphic design. Built with Electron + React. Full Arabic RTL support, Kuwaiti Dinar (KWD) currency, and VAT 15% compliance.
 
 ## Tech Stack
 - **Framework:** Electron 28.x + Electron Builder
 - **Frontend:** React 18 + TypeScript + TailwindCSS
-- **Database:** better-sqlite3 (local SQLite, no server needed)
-- **Barcode Scanner:** HID Keyboard Wedge + Camera-based QR/Barcode
+- **Database:** better-sqlite3 (local SQLite)
+- **Barcode Scanner:** HID Keyboard Wedge + Camera-based (Html5Qrcode)
 - **Receipt Printer:** EPSON TM-T81 (ESC/POS via USB Serial)
-- **UI:** Modern RTL Arabic interface with Tajawal font
+- **UI:** Modern Glassmorphic Dark Theme with Tajawal Arabic font
+
+---
+
+## Design System
+
+### Visual Style
+- **Theme:** Dark glassmorphic with backdrop blur effects
+- **Background:** Slate-900 (#0f172a) with subtle gradients
+- **Cards:** Glass-effect with `bg-slate-800/60 backdrop-blur-xl`
+- **Borders:** Subtle `border-slate-700/50`
+- **Radius:** Large rounded corners (rounded-2xl, rounded-3xl)
+- **Shadows:** Colored glow shadows for interactive elements
+
+### Color Palette
+| Token | Value | Usage |
+|-------|-------|-------|
+| Primary | Indigo #6366f1 | Buttons, accents, highlights |
+| Success | Emerald #10b981 | Cash payments, confirmations |
+| Warning | Amber #f59e0b | Pending, low stock |
+| Error | Red #ef4444 | Cancelled, out of stock |
+| Info | Blue #3b82f6 | Card payments |
+| Surface | Slate-800/60 | Glass cards |
+| Background | Slate-900 | Base background |
+
+### Components
+- **GlassCard:** Reusable glass-effect container with blur
+- **ModernBtn:** Gradient buttons with glow shadows (primary/success/danger/ghost/outline)
+- **IconBtn:** Icon-only buttons with badge support
+- **StatCard:** Statistics display with icons and trends
+- **Tag:** Colored pills for status/category labels
+
+### Animations
+- `animate-slide-in`: Cart drawer slides from right
+- `animate-scale-in`: Modal scale entrance
+- `animate-pulse`: Badge notifications
+- `active:scale-95`: Tactile press feedback
+
+---
 
 ## Architecture
 
 ```
 pos-system/
 ├── src/
-│   ├── main/           # Electron main process
-│   │   ├── printer.ts  # ESC/POS printer driver
-│   │   ├── scanner.ts  # HID scanner handler
-│   │   ├── database.ts # SQLite operations (MVP schema)
-│   │   ├── main.ts     # IPC handlers + window management
-│   │   └── preload.ts  # Context bridge API
-│   ├── renderer/       # React frontend
-│   │   ├── App.tsx    # Complete MVP app (all screens)
-│   │   ├── styles.css # Tailwind + custom animations
-│   │   └── main.tsx   # Entry point
-│   └── shared/         # Shared types
-├── android/            # Capacitor Android project
-├── dist/               # Compiled output
-└── release/            # Built executables
+│   ├── main/
+│   │   ├── database.ts  # SQLite + MVP schema
+│   │   ├── main.ts      # IPC handlers (30+)
+│   │   ├── preload.ts   # Context bridge
+│   │   ├── printer.ts   # ESC/POS driver
+│   │   └── scanner.ts   # HID handler
+│   └── renderer/
+│       ├── App.tsx      # Complete MVP (~900 lines)
+│       ├── styles.css   # Tailwind + animations
+│       └── main.tsx
+├── android/             # Capacitor project
+└── SPEC.md
 ```
 
 ---
 
-## MVP Features (Complete)
+## Database Schema
 
-### 1. Dashboard
-- [x] Today's sales summary with comparison to yesterday
-- [x] Orders count and pending orders
-- [x] Low stock alerts
-- [x] Quick action buttons (8 shortcuts)
-- [x] Real-time auto-refresh every 30 seconds
-
-### 2. POS Terminal (شاشة البيع)
-- [x] Order type selection (Dine In / Takeaway / Delivery)
-- [x] Category navigation with color-coded pills
-- [x] Product grid with stock indicators
-- [x] Real-time search by name or barcode
-- [x] Add/remove items with quantity controls
-- [x] Cart drawer with order details
-- [x] Table selection for Dine In orders
-- [x] Discount application (preset or custom)
-- [x] Split bill options (equal or custom)
-- [x] Cash/Card payment processing
-- [x] VAT 15% calculation (Kuwaiti tax)
-- [x] Auto-print receipt on payment
-- [x] Haptic feedback and sound effects
-- [x] Camera barcode scanner (Html5Qrcode)
-
-### 3. Table Management (إدارة الطاولات)
-- [x] Visual floor plan (5x5 grid)
-- [x] Table status: Available / Occupied / Reserved
-- [x] One-tap status toggle
-- [x] Capacity display per table
-- [x] Auto-link to orders
-
-### 4. Kitchen Display System - KDS (المطبخ)
-- [x] Real-time ticket queue
-- [x] Priority levels (Normal / High / Urgent)
-- [x] Auto-refresh every 5 seconds
-- [x] One-tap "Ready" completion
-- [x] Table number display
-- [x] Item quantities per ticket
-- [x] Order age display
-
-### 5. Orders Management (الطلبات)
-- [x] Filter by status: All / Pending / Paid / Cancelled / Preparing
-- [x] Order details modal
-- [x] Status update actions
-- [x] Payment method display
-- [x] Date filtering
-- [x] Cashier name tracking
-
-### 6. Products Management (المنتجات)
-- [x] Product CRUD (Create/Read/Update/Delete)
-- [x] Category assignment
-- [x] Barcode assignment
-- [x] Stock tracking with min_stock alerts
-- [x] Quick stock adjustment (+/-)
-- [x] Low stock warning indicators
-- [x] Price in KWD
-
-### 7. Reports & Analytics (التقارير)
-- [x] Period filters: Today / Week / Month
-- [x] Sales report with daily breakdown
-- [x] Products ranking by quantity sold
-- [x] Category revenue breakdown
-- [x] Total orders count
-- [x] Cash vs Card breakdown
-- [x] Tax collected
-
-### 8. Settings & Configuration (الإعدادات)
-- [x] Store name and VAT number
-- [x] Receipt footer text
-- [x] Printer port selection (USB001/COM1/COM2)
-- [x] Test print functionality
-- [x] Cashier management (Add/Delete with PIN)
-- [x] Discount management (percent or fixed)
-- [x] Category management (Add with icon/color)
-
-### 9. Cashier System (أمينات الصندوق)
-- [x] PIN-based login (4-digit)
-- [x] Role-based access (Cashier / Admin)
-- [x] Current cashier display in header
-- [x] Cash drawer events tracking
-
----
-
-## Database Schema (MVP)
-
-### Tables
-| Table | Description |
-|-------|-------------|
-| `branches` | Restaurant branches |
-| `categories` | Product categories |
-| `products` | Products with barcodes, stock, pricing |
-| `tables` | Restaurant tables with positions |
-| `cashiers` | Cashiers with PIN authentication |
-| `order_types` | Dine In / Takeaway / Delivery |
-| `discounts` | Discount rules (percent/fixed) |
-| `tax_rates` | Tax configurations |
-| `orders` | Orders with full metadata |
-| `order_items` | Individual items per order |
-| `kitchen_tickets` | Kitchen display tickets |
-| `payments` | Payment records |
-| `cash_drawer_events` | Cash drawer audit log |
-| `daily_sales` | Daily aggregated sales |
-| `settings` | Key-value store settings |
+### Core Tables
+| Table | Columns | Description |
+|-------|---------|-------------|
+| `branches` | id, name, name_ar, address, is_active | Restaurant branches |
+| `tables` | id, branch_id, number, capacity, status, floor, is_active | Tables with status |
+| `cashiers` | id, name, pin, role, is_active | PIN-authenticated users |
+| `order_types` | id, name, name_ar, color, icon, is_dine_in, is_takeaway, is_delivery | Order categories |
+| `discounts` | id, name, name_ar, type (percent/fixed), value, min_order, is_active | Discount rules |
+| `tax_rates` | id, name, rate, is_active | Tax configurations |
+| `products` | id, barcode, name, name_ar, price, category_id, stock, image, min_stock | Catalog |
+| `categories` | id, name, name_ar, color, icon, is_active | Product categories |
+| `orders` | id, order_number, status, subtotal, discount_value, discount_amount, tax_rate, tax_amount, total, payment_method, order_type_id, table_id, cashier_id, branch_id, notes, created_at | Orders |
+| `order_items` | id, order_id, product_id, quantity, unit_price, total, notes, status, split_group, course_number | Line items |
+| `kitchen_tickets` | id, order_id, table_number, items (JSON), status, priority, created_at | KDS queue |
+| `payments` | id, order_id, method, amount, created_at | Payment records |
+| `cash_drawer_events` | id, cashier_id, type, amount, notes, created_at | Cash tracking |
+| `daily_sales` | id, date, total_orders, total_sales, cash_sales, card_sales, tax_collected | Daily aggregates |
+| `settings` | key, value | Key-value store |
 
 ### Indexes
-- `idx_orders_status` - Fast order status filtering
-- `idx_orders_created` - Date range queries
-- `idx_orders_branch` - Branch filtering
-- `idx_products_barcode` - Barcode lookup
-- `idx_products_category` - Category filtering
-- `idx_order_items_order` - Order items join
+- `idx_orders_status` on orders(status)
+- `idx_orders_created` on orders(created_at)
+- `idx_products_barcode` on products(barcode)
+- `idx_order_items_order` on order_items(order_id)
 
 ---
 
-## UI Screens
+## Features
 
-### Navigation
-8-tab bottom navigation:
-1. 📊 الرئيسية (Dashboard)
-2. 💳 البيع (POS)
-3. 🪑 الطاولات (Tables)
-4. 👨‍🍳 المطبخ (Kitchen)
-5. 📋 الطلبات (Orders)
-6. 📈 التقارير (Reports)
-7. 📦 المنتجات (Products)
-8. ⚙️ الإعدادات (Settings)
+### 1. Dashboard
+- [x] Today's sales with yesterday comparison
+- [x] Sales trend indicator (%)
+- [x] Orders count, pending orders
+- [x] Low stock alerts
+- [x] Quick action grid (6 shortcuts)
+- [x] Auto-refresh every 15 seconds
 
-### Color Palette
-- Primary: Indigo (#6366f1)
-- Success/Cash: Emerald (#10B981)
-- Warning: Amber (#F59E0B)
-- Error/Cancel: Red (#EF4444)
-- Info/Card: Blue (#3B82F6)
-- Background: Slate-900 (#0f172a)
-- Surface: Slate-800 (#1e293b)
+### 2. POS Terminal
+- [x] Order type selector (Dine In/Takeaway/Delivery) with icons
+- [x] Category pills with color coding
+- [x] Product grid with stock indicators
+- [x] Real-time search (name/barcode)
+- [x] Quantity +/- controls
+- [x] Cart drawer with slide animation
+- [x] Table selection for dine-in
+- [x] Preset + custom discount
+- [x] Split bill options (equal/custom)
+- [x] Cash/Card payment
+- [x] VAT 15% calculation
+- [x] Auto-print receipt
+- [x] Haptic + sound feedback
 
----
+### 3. Table Management
+- [x] Visual floor plan (5x5 grid)
+- [x] Status colors: green=available, red=occupied, amber=reserved
+- [x] Capacity display
+- [x] One-tap status toggle
 
-## Hardware Integration
+### 4. Kitchen Display System (KDS)
+- [x] Ticket queue with auto-refresh (5s)
+- [x] Priority levels (urgent/high/normal)
+- [x] Table number + order items
+- [x] One-tap "Ready" completion
 
-### Barcode Scanner (HID Keyboard Wedge)
-- Auto-detect: rapid character input + Enter
-- Sound feedback (1400Hz beep)
-- Haptic feedback on mobile
-- Supports: EAN-13, UPC-A, Code 128, QR
+### 5. Orders Management
+- [x] Status filters (All/Pending/Paid/Cancelled)
+- [x] Date picker filter
+- [x] Order detail modal
+- [x] Payment method display
+- [x] Status update actions
 
-### Receipt Printer (EPSON TM-T81)
-- USB Serial (COM port emulation)
-- ESC/POS commands
-- Paper width: 80mm
-- Support: Text, Bold, Alignment, Cut
+### 6. Products
+- [x] Product list with stock display
+- [x] Add product modal
+- [x] Stock adjustment (+/-)
+- [x] Delete product
+- [x] Category assignment
 
-### Camera Scanner
-- Html5Qrcode library
-- Environment-facing camera
-- 10 FPS, 250x150 scan area
-- Auto-stop after successful scan
+### 7. Reports
+- [x] Period: Today/Week/Month
+- [x] Sales summary cards
+- [x] Sales by date
+- [x] Products ranking by quantity
+- [x] Categories breakdown
 
----
-
-## Saudi/Kuwaiti-Specific
-- RTL Arabic interface (direction: rtl)
-- Kuwaiti Dinar (KWD) currency
-- Currency symbol: د.ك
-- VAT 15% calculation
-- Arabic product names
-- Tajawal Google Font
-- Islamic date support (future)
+### 8. Settings
+- [x] Store name, VAT number
+- [x] Receipt footer text
+- [x] Test print
+- [x] Cashier CRUD with PIN
+- [x] Discount CRUD (percent/fixed)
+- [x] Category CRUD with icon/color picker
 
 ---
 
 ## Build & Distribution
-- Windows x64 executable (.exe)
-- NSIS installer
-- Auto-update support ready
-- APK for Android (via Capacitor)
-- Portable version available
+
+```bash
+# Build web assets
+npm run build
+
+# Sync to Android
+npx cap sync android
+
+# Build APK
+cd android && ./gradlew assembleDebug
+
+# Or use Electron for desktop
+npm run dist
+```
+
+### Downloads
+- **APK:** https://83.171.249.32/POS-Kuwait-debug.apk
+- **Windows:** See `release/` folder after `npm run dist`
