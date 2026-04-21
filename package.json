@@ -41,12 +41,15 @@
     }
   },
   "dependencies": {
+    "@capacitor-community/sqlite": "^8.1.0",
     "@capacitor/android": "^8.3.1",
+    "@capacitor/barcode-scanner": "^3.0.2",
     "@capacitor/cli": "^8.3.1",
     "@capacitor/core": "^8.3.1",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/preferences": "^8.0.1",
     "better-sqlite3": "^11.3.0",
-    "electron-log": "^5.1.7",
-    "html5-qrcode": "^2.3.8"
+    "electron-log": "^5.1.7"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",

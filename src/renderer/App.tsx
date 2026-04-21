@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import { useState, useEffect } from 'react';
 
 // ============ TYPES ============
 interface Product { id: number; barcode: string; name: string; name_ar: string; price: number; category_id: number; stock?: number; }
@@ -138,8 +137,6 @@ export default function App() {
   const [orderNumber] = useState(() => String(Math.floor(Math.random() * 900) + 100));
   const [showCart, setShowCart] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const scannerRef = useRef<Html5Qrcode | null>(null);
-  const scannerContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     pos.onBarcodeScanned((barcode: string) => {
@@ -189,15 +186,18 @@ export default function App() {
 
   async function startScanner() { setScanning(true); }
   useEffect(() => {
-    if (scanning && scannerContainerRef.current) {
-      const scanner = new Html5Qrcode('scanner-view');
-      scannerRef.current = scanner;
-      scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 280, height: 160 } },
-        (text) => { setScanning(false); scanner.stop().catch(() => {}); },
-        () => {}
-      ).catch(() => setScanning(false));
+    if (scanning) {
+      pos.startBarcodeScanner().then(barcode => {
+        if (barcode) {
+          pos.searchProduct(barcode).then((prods: Product[]) => {
+            if (prods.length > 0) addToOrder(prods[0]);
+          });
+        }
+        setScanning(false);
+      }).catch(() => setScanning(false));
+    } else {
+      pos.stopBarcodeScanner().catch(() => {});
     }
-    return () => { if (scannerRef.current) scannerRef.current.stop().catch(() => {}); };
   }, [scanning]);
 
   return (
@@ -268,20 +268,11 @@ export default function App() {
 
       {/* Scanner Overlay */}
       {scanning && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col">
-          <div className="flex items-center justify-between p-4 bg-black/80">
-            <span className="text-white font-black">📷 سكان الباركود</span>
-            <button onClick={() => { setScanning(false); if (scannerRef.current) scannerRef.current.stop().catch(() => {}); }} className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center font-bold">✕</button>
-          </div>
-          <div className="flex-1 relative">
-            <div id="scanner-view" ref={scannerContainerRef} className="w-full h-full" />
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <div className="w-72 h-44 border-2 border-indigo-400 rounded-3xl" />
-            </div>
-            <div className="absolute bottom-8 left-0 right-0 text-center">
-              <p className="text-white text-sm bg-black/70 inline-block px-6 py-2 rounded-full">وجّه الكاميرا نحو الباركود</p>
-            </div>
-          </div>
+        <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
+          <div className="text-6xl mb-4 animate-pulse">📷</div>
+          <p className="text-white text-lg font-bold mb-2">جاري فتح الكاميرا...</p>
+          <p className="text-slate-400 text-sm">وجّه الكاميرا نحو الباركود</p>
+          <button onClick={() => setScanning(false)} className="mt-8 px-6 py-3 bg-red-600 text-white rounded-2xl font-bold">إلغاء</button>
         </div>
       )}
     </div>
