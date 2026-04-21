@@ -201,8 +201,284 @@ ipcMain.handle('add-category', async (_, category: any) => {
   const db = getDb();
   const maxOrder = db.prepare('SELECT MAX(sort_order) as m FROM categories').get() as any;
   const result = db.prepare(`
-    INSERT INTO categories (name, color, icon, sort_order)
-    VALUES (?, ?, ?, ?)
-  `).run(category.name, category.color, category.icon, (maxOrder?.m || 0) + 1);
+    INSERT INTO categories (name, name_ar, color, icon, sort_order)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(category.name, category.name_ar, category.color, category.icon, (maxOrder?.m || 0) + 1);
   return result.lastInsertRowid;
+});
+
+// ============ MVP IPC HANDLERS ============
+
+// ---- Order Types ----
+ipcMain.handle('get-order-types', async () => {
+  const db = getDb();
+  return db.prepare('SELECT * FROM order_types').all();
+});
+
+// ---- Tables ----
+ipcMain.handle('get-tables', async () => {
+  const db = getDb();
+  return db.prepare('SELECT * FROM tables WHERE is_active = 1').all();
+});
+
+ipcMain.handle('update-table-status', async (_, tableId: number, status: string) => {
+  const db = getDb();
+  db.prepare('UPDATE tables SET status = ? WHERE id = ?').run(status, tableId);
+  return true;
+});
+
+// ---- Cashiers ----
+ipcMain.handle('get-cashiers', async () => {
+  const db = getDb();
+  return db.prepare('SELECT id, name, role, is_active FROM cashiers WHERE is_active = 1').all();
+});
+
+ipcMain.handle('add-cashier', async (_, cashier: any) => {
+  const db = getDb();
+  const result = db.prepare('INSERT INTO cashiers (name, pin, role) VALUES (?, ?, ?)').run(cashier.name, cashier.pin, cashier.role || 'cashier');
+  return result.lastInsertRowid;
+});
+
+ipcMain.handle('delete-cashier', async (_, id: number) => {
+  const db = getDb();
+  db.prepare('UPDATE cashiers SET is_active = 0 WHERE id = ?').run(id);
+  return true;
+});
+
+ipcMain.handle('verify-cashier-pin', async (_, pin: string) => {
+  const db = getDb();
+  const cashier = db.prepare('SELECT * FROM cashiers WHERE pin = ? AND is_active = 1').get(pin);
+  return cashier || null;
+});
+
+// ---- Discounts ----
+ipcMain.handle('get-discounts', async () => {
+  const db = getDb();
+  return db.prepare('SELECT * FROM discounts WHERE is_active = 1').all();
+});
+
+ipcMain.handle('add-discount', async (_, discount: any) => {
+  const db = getDb();
+  const result = db.prepare(`
+    INSERT INTO discounts (name, name_ar, type, value, min_order)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(discount.name, discount.name_ar, discount.type, discount.value, discount.min_order || 0);
+  return result.lastInsertRowid;
+});
+
+// ---- Tax Rates ----
+ipcMain.handle('get-tax-rates', async () => {
+  const db = getDb();
+  return db.prepare('SELECT * FROM tax_rates WHERE is_active = 1').all();
+});
+
+// ---- Branches ----
+ipcMain.handle('get-branches', async () => {
+  const db = getDb();
+  return db.prepare('SELECT * FROM branches WHERE is_active = 1').all();
+});
+
+// ---- Orders with filters ----
+ipcMain.handle('get-orders', async (_, filters: { status?: string; date?: string; branch_id?: number }) => {
+  const db = getDb();
+  let query = `
+    SELECT o.*, ot.name_ar as order_type_name, c.name as cashier_name, t.number as table_number
+    FROM orders o
+    LEFT JOIN order_types ot ON ot.id = o.order_type_id
+    LEFT JOIN cashiers c ON c.id = o.cashier_id
+    LEFT JOIN tables t ON t.id = o.table_id
+    WHERE 1=1
+  `;
+  const params: any[] = [];
+  if (filters.status) { query += ' AND o.status = ?'; params.push(filters.status); }
+  if (filters.date) { query += ' AND DATE(o.created_at) = ?'; params.push(filters.date); }
+  if (filters.branch_id) { query += ' AND o.branch_id = ?'; params.push(filters.branch_id); }
+  query += ' ORDER BY o.created_at DESC';
+  return db.prepare(query).all(...params);
+});
+
+ipcMain.handle('get-order-details', async (_, orderId: number) => {
+  const db = getDb();
+  const order = db.prepare(`
+    SELECT o.*, ot.name_ar as order_type_name, c.name as cashier_name, t.number as table_number
+    FROM orders o
+    LEFT JOIN order_types ot ON ot.id = o.order_type_id
+    LEFT JOIN cashiers c ON c.id = o.cashier_id
+    LEFT JOIN tables t ON t.id = o.table_id
+    WHERE o.id = ?
+  `).get(orderId) as any;
+  const items = db.prepare(`
+    SELECT oi.*, p.name_ar, p.name
+    FROM order_items oi
+    JOIN products p ON p.id = oi.product_id
+    WHERE oi.order_id = ?
+  `).all(orderId);
+  return { ...order, items };
+});
+
+ipcMain.handle('update-order-status', async (_, orderId: number, status: string) => {
+  const db = getDb();
+  db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, orderId);
+  return true;
+});
+
+ipcMain.handle('update-order-item-status', async (_, itemId: number, status: string) => {
+  const db = getDb();
+  db.prepare('UPDATE order_items SET status = ? WHERE id = ?').run(status, itemId);
+  return true;
+});
+
+// ---- Advanced Reports ----
+ipcMain.handle('get-sales-report', async (_, period: { start: string; end: string; branch_id?: number }) => {
+  const db = getDb();
+  let query = `
+    SELECT
+      DATE(o.created_at) as date,
+      COUNT(*) as order_count,
+      SUM(o.total) as total_sales,
+      SUM(CASE WHEN o.payment_method = 'cash' THEN o.total ELSE 0 END) as cash_sales,
+      SUM(CASE WHEN o.payment_method = 'card' THEN o.total ELSE 0 END) as card_sales,
+      SUM(o.tax_amount) as tax_collected,
+      SUM(o.discount_value) as discounts_given
+    FROM orders o
+    WHERE o.status = 'paid' AND DATE(o.created_at) BETWEEN ? AND ?
+  `;
+  const params: any[] = [period.start, period.end];
+  if (period.branch_id) { query += ' AND o.branch_id = ?'; params.push(period.branch_id); }
+  query += ' GROUP BY DATE(o.created_at) ORDER BY date DESC';
+  return db.prepare(query).all(...params);
+});
+
+ipcMain.handle('get-products-report', async (_, period: { start: string; end: string }) => {
+  const db = getDb();
+  return db.prepare(`
+    SELECT
+      p.id, p.name, p.name_ar,
+      SUM(oi.quantity) as total_qty,
+      SUM(oi.total) as total_revenue
+    FROM order_items oi
+    JOIN orders o ON o.id = oi.order_id
+    JOIN products p ON p.id = oi.product_id
+    WHERE o.status = 'paid' AND DATE(o.created_at) BETWEEN ? AND ?
+    GROUP BY p.id
+    ORDER BY total_qty DESC
+  `).all(period.start, period.end);
+});
+
+ipcMain.handle('get-category-report', async (_, period: { start: string; end: string }) => {
+  const db = getDb();
+  return db.prepare(`
+    SELECT
+      c.id, c.name, c.name_ar, c.icon, c.color,
+      SUM(oi.quantity) as total_qty,
+      SUM(oi.total) as total_revenue
+    FROM order_items oi
+    JOIN orders o ON o.id = oi.order_id
+    JOIN products p ON p.id = oi.product_id
+    JOIN categories c ON c.id = p.category_id
+    WHERE o.status = 'paid' AND DATE(o.created_at) BETWEEN ? AND ?
+    GROUP BY c.id
+    ORDER BY total_revenue DESC
+  `).all(period.start, period.end);
+});
+
+// ---- Cash Drawer ----
+ipcMain.handle('get-cash-drawer-events', async (_, cashierId: number) => {
+  const db = getDb();
+  return db.prepare('SELECT * FROM cash_drawer_events WHERE cashier_id = ? ORDER BY created_at DESC LIMIT 50').all(cashierId);
+});
+
+ipcMain.handle('add-cash-drawer-event', async (_, event: any) => {
+  const db = getDb();
+  const result = db.prepare(`
+    INSERT INTO cash_drawer_events (cashier_id, type, amount, notes)
+    VALUES (?, ?, ?, ?)
+  `).run(event.cashier_id, event.type, event.amount || 0, event.notes || '');
+  return result.lastInsertRowid;
+});
+
+// ---- Kitchen Tickets ----
+ipcMain.handle('get-kitchen-tickets', async () => {
+  const db = getDb();
+  return db.prepare(`
+    SELECT * FROM kitchen_tickets
+    WHERE status IN ('pending', 'preparing')
+    ORDER BY
+      CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 ELSE 2 END,
+      created_at ASC
+  `).all();
+});
+
+ipcMain.handle('update-kitchen-ticket', async (_, ticketId: number, status: string) => {
+  const db = getDb();
+  const completedAt = status === 'completed' ? new Date().toISOString() : null;
+  db.prepare('UPDATE kitchen_tickets SET status = ?, completed_at = ? WHERE id = ?').run(status, completedAt, ticketId);
+  return true;
+});
+
+ipcMain.handle('create-kitchen-ticket', async (_, data: { order_id: number; table_number: string; items: any[]; priority?: string }) => {
+  const db = getDb();
+  const result = db.prepare(`
+    INSERT INTO kitchen_tickets (order_id, table_number, items, priority)
+    VALUES (?, ?, ?, ?)
+  `).run(data.order_id, data.table_number, JSON.stringify(data.items), data.priority || 'normal');
+  return result.lastInsertRowid;
+});
+
+// ---- Split Bill ----
+ipcMain.handle('create-split-bill', async (_, orderId: number, splitType: string, splitData: any) => {
+  const db = getDb();
+  // For now, create a reference - actual split bill logic in renderer
+  return { order_id: orderId, split_type: splitType, data: splitData };
+});
+
+// ---- Quick stats for dashboard ----
+ipcMain.handle('get-quick-stats', async () => {
+  const db = getDb();
+  const today = new Date().toISOString().split('T')[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+  const todaySales = db.prepare(`
+    SELECT COUNT(*) as orders, COALESCE(SUM(total), 0) as total
+    FROM orders WHERE status = 'paid' AND DATE(created_at) = ?
+  `).get(today) as any;
+
+  const yesterdaySales = db.prepare(`
+    SELECT COALESCE(SUM(total), 0) as total
+    FROM orders WHERE status = 'paid' AND DATE(created_at) = ?
+  `).get(yesterday) as any;
+
+  const pendingOrders = db.prepare(`
+    SELECT COUNT(*) as count FROM orders WHERE status = 'pending'
+  `).get() as any;
+
+  const lowStock = db.prepare(`
+    SELECT COUNT(*) as count FROM products WHERE stock <= min_stock AND is_active = 1
+  `).get() as any;
+
+  return {
+    today_orders: todaySales.orders,
+    today_sales: todaySales.total,
+    yesterday_sales: yesterdaySales.total,
+    sales_change: yesterdaySales.total > 0 ? ((todaySales.total - yesterdaySales.total) / yesterdaySales.total * 100).toFixed(1) : '0',
+    pending_orders: pendingOrders.count,
+    low_stock_count: lowStock.count,
+  };
+});
+
+// ---- Product search with barcode ----
+ipcMain.handle('search-product', async (_, query: string) => {
+  const db = getDb();
+  return db.prepare(`
+    SELECT * FROM products
+    WHERE (barcode = ? OR name LIKE ? OR name_ar LIKE ?) AND is_active = 1
+    LIMIT 5
+  `).all(query, `%${query}%`, `%${query}%`);
+});
+
+// ---- Update product stock ----
+ipcMain.handle('update-product-stock', async (_, productId: number, delta: number) => {
+  const db = getDb();
+  db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?').run(delta, productId);
+  return true;
 });

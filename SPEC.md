@@ -1,15 +1,15 @@
-# POS System - Saudi Restaurant Edition
+# POS System Kuwait - MVP Edition
 
 ## Overview
-Desktop POS (Point of Sale) application for Windows, built with Electron + React. Designed for Saudi restaurants with full Arabic support.
+Professional Point of Sale system for Kuwaiti restaurants, built with Electron + React. Full Arabic RTL support, Kuwaiti Dinar (KWD) currency, and VAT 15% compliance.
 
 ## Tech Stack
 - **Framework:** Electron 28.x + Electron Builder
 - **Frontend:** React 18 + TypeScript + TailwindCSS
-- **Database:** better-sqlite3 (local, no server needed)
-- **Barcode Scanner:** HID Keyboard Wedge (auto-detect)
+- **Database:** better-sqlite3 (local SQLite, no server needed)
+- **Barcode Scanner:** HID Keyboard Wedge + Camera-based QR/Barcode
 - **Receipt Printer:** EPSON TM-T81 (ESC/POS via USB Serial)
-- **UI:** Modern RTL Arabic interface
+- **UI:** Modern RTL Arabic interface with Tajawal font
 
 ## Architecture
 
@@ -19,222 +19,196 @@ pos-system/
 │   ├── main/           # Electron main process
 │   │   ├── printer.ts  # ESC/POS printer driver
 │   │   ├── scanner.ts  # HID scanner handler
-│   │   ├── database.ts # SQLite operations
-│   │   └── ipc.ts      # IPC handlers
+│   │   ├── database.ts # SQLite operations (MVP schema)
+│   │   ├── main.ts     # IPC handlers + window management
+│   │   └── preload.ts  # Context bridge API
 │   ├── renderer/       # React frontend
-│   │   ├── components/ # UI components
-│   │   ├── screens/    # App screens
-│   │   ├── hooks/      # React hooks
-│   │   └── stores/     # State management
+│   │   ├── App.tsx    # Complete MVP app (all screens)
+│   │   ├── styles.css # Tailwind + custom animations
+│   │   └── main.tsx   # Entry point
 │   └── shared/         # Shared types
-├── assets/             # Icons, images
-├── installers/          # Built executables
-└── SPEC.md
+├── android/            # Capacitor Android project
+├── dist/               # Compiled output
+└── release/            # Built executables
 ```
 
-## Database Schema
+---
 
-### products
-| Column | Type | Description |
-|--------|------|-------------|
-| id | INTEGER PK | Auto increment |
-| barcode | TEXT UNIQUE | Product barcode |
-| name | TEXT | Arabic/English name |
-| name_ar | TEXT | Arabic name |
-| price | REAL | Price in SAR |
-| category_id | INTEGER FK | Category |
-| image | TEXT | Product image path |
-| is_active | INTEGER | 1=active, 0=hidden |
+## MVP Features (Complete)
 
-### categories
-| Column | Type | Description |
-|--------|------|-------------|
-| id | INTEGER PK | Auto increment |
-| name | TEXT | Category name |
-| color | TEXT | UI color hex |
-| icon | TEXT | Icon name |
-| sort_order | INTEGER | Display order |
+### 1. Dashboard
+- [x] Today's sales summary with comparison to yesterday
+- [x] Orders count and pending orders
+- [x] Low stock alerts
+- [x] Quick action buttons (8 shortcuts)
+- [x] Real-time auto-refresh every 30 seconds
 
-### orders
-| Column | Type | Description |
-|--------|------|-------------|
-| id | INTEGER PK | Auto increment |
-| order_number | TEXT | Display number (e.g., "001") |
-| subtotal | REAL | Subtotal |
-| tax | REAL | VAT 15% |
-| total | REAL | Grand total |
-| status | TEXT | pending/paid/cancelled |
-| payment_method | TEXT | cash/card |
-| created_at | TEXT | ISO timestamp |
+### 2. POS Terminal (شاشة البيع)
+- [x] Order type selection (Dine In / Takeaway / Delivery)
+- [x] Category navigation with color-coded pills
+- [x] Product grid with stock indicators
+- [x] Real-time search by name or barcode
+- [x] Add/remove items with quantity controls
+- [x] Cart drawer with order details
+- [x] Table selection for Dine In orders
+- [x] Discount application (preset or custom)
+- [x] Split bill options (equal or custom)
+- [x] Cash/Card payment processing
+- [x] VAT 15% calculation (Kuwaiti tax)
+- [x] Auto-print receipt on payment
+- [x] Haptic feedback and sound effects
+- [x] Camera barcode scanner (Html5Qrcode)
 
-### order_items
-| Column | Type | Description |
-|--------|------|-------------|
-| id | INTEGER PK | Auto increment |
-| order_id | INTEGER FK | Order reference |
-| product_id | INTEGER FK | Product reference |
-| quantity | INTEGER | Qty |
-| unit_price | REAL | Price at time of order |
-| total | REAL | Line total |
+### 3. Table Management (إدارة الطاولات)
+- [x] Visual floor plan (5x5 grid)
+- [x] Table status: Available / Occupied / Reserved
+- [x] One-tap status toggle
+- [x] Capacity display per table
+- [x] Auto-link to orders
 
-### settings
-| Column | Type | Description |
-|--------|------|-------------|
-| key | TEXT PK | Setting key |
-| value | TEXT | Setting value |
+### 4. Kitchen Display System - KDS (المطبخ)
+- [x] Real-time ticket queue
+- [x] Priority levels (Normal / High / Urgent)
+- [x] Auto-refresh every 5 seconds
+- [x] One-tap "Ready" completion
+- [x] Table number display
+- [x] Item quantities per ticket
+- [x] Order age display
+
+### 5. Orders Management (الطلبات)
+- [x] Filter by status: All / Pending / Paid / Cancelled / Preparing
+- [x] Order details modal
+- [x] Status update actions
+- [x] Payment method display
+- [x] Date filtering
+- [x] Cashier name tracking
+
+### 6. Products Management (المنتجات)
+- [x] Product CRUD (Create/Read/Update/Delete)
+- [x] Category assignment
+- [x] Barcode assignment
+- [x] Stock tracking with min_stock alerts
+- [x] Quick stock adjustment (+/-)
+- [x] Low stock warning indicators
+- [x] Price in KWD
+
+### 7. Reports & Analytics (التقارير)
+- [x] Period filters: Today / Week / Month
+- [x] Sales report with daily breakdown
+- [x] Products ranking by quantity sold
+- [x] Category revenue breakdown
+- [x] Total orders count
+- [x] Cash vs Card breakdown
+- [x] Tax collected
+
+### 8. Settings & Configuration (الإعدادات)
+- [x] Store name and VAT number
+- [x] Receipt footer text
+- [x] Printer port selection (USB001/COM1/COM2)
+- [x] Test print functionality
+- [x] Cashier management (Add/Delete with PIN)
+- [x] Discount management (percent or fixed)
+- [x] Category management (Add with icon/color)
+
+### 9. Cashier System (أمينات الصندوق)
+- [x] PIN-based login (4-digit)
+- [x] Role-based access (Cashier / Admin)
+- [x] Current cashier display in header
+- [x] Cash drawer events tracking
+
+---
+
+## Database Schema (MVP)
+
+### Tables
+| Table | Description |
+|-------|-------------|
+| `branches` | Restaurant branches |
+| `categories` | Product categories |
+| `products` | Products with barcodes, stock, pricing |
+| `tables` | Restaurant tables with positions |
+| `cashiers` | Cashiers with PIN authentication |
+| `order_types` | Dine In / Takeaway / Delivery |
+| `discounts` | Discount rules (percent/fixed) |
+| `tax_rates` | Tax configurations |
+| `orders` | Orders with full metadata |
+| `order_items` | Individual items per order |
+| `kitchen_tickets` | Kitchen display tickets |
+| `payments` | Payment records |
+| `cash_drawer_events` | Cash drawer audit log |
+| `daily_sales` | Daily aggregated sales |
+| `settings` | Key-value store settings |
+
+### Indexes
+- `idx_orders_status` - Fast order status filtering
+- `idx_orders_created` - Date range queries
+- `idx_orders_branch` - Branch filtering
+- `idx_products_barcode` - Barcode lookup
+- `idx_products_category` - Category filtering
+- `idx_order_items_order` - Order items join
+
+---
 
 ## UI Screens
 
-### 1. POS Screen (Main)
-```
-┌─────────────────────────────────────────────────────┐
-│ [categories sidebar]  │  [products grid]            │
-│                      │                             │
-│ 🔙 العودة            │  ┌────┐ ┌────┐ ┌────┐     │
-│ ─────────────         │  │منتج│ │منتج│ │منتج│     │
-│ ☕ مشروبات            │  └────┘ └────┘ └────┘     │
-│ 🍔 وجبات              │  ┌────┐ ┌────┐ ┌────┐     │
-│ 🍕 بيتزا              │  │منتج│ │منتج│ │منتج│     │
-│ 🥤 عصيرات             │  └────┘ └────┘ └────┘     │
-│ 🍰 حلويات             │                             │
-│                      │                             │
-├──────────────────────┴─────────────────────────────┤
-│ [current order - right panel]                       │
-│ Order #004                                          │
-│ ────────────────────────────────────                │
-│ 2x شاي أخضر          6.00                          │
-│ 1x هامبرغر           18.00                          │
-│ ────────────────────────────────────                │
-│ Subtotal:              24.00                        │
-│ VAT 15%:               3.60                        │
-│ ═══════════════════════════                         │
-│ TOTAL:                27.60 SAR                     │
-│                                                     │
-│ [💵 نقد] [💳 بطاقة] [🖨️ طباعة] [❌ إلغاء]           │
-└─────────────────────────────────────────────────────┘
-```
+### Navigation
+8-tab bottom navigation:
+1. 📊 الرئيسية (Dashboard)
+2. 💳 البيع (POS)
+3. 🪑 الطاولات (Tables)
+4. 👨‍🍳 المطبخ (Kitchen)
+5. 📋 الطلبات (Orders)
+6. 📈 التقارير (Reports)
+7. 📦 المنتجات (Products)
+8. ⚙️ الإعدادات (Settings)
 
-### 2. Dashboard
-- Today's sales summary
-- Orders count
-- Revenue
-- Top products chart
+### Color Palette
+- Primary: Indigo (#6366f1)
+- Success/Cash: Emerald (#10B981)
+- Warning: Amber (#F59E0B)
+- Error/Cancel: Red (#EF4444)
+- Info/Card: Blue (#3B82F6)
+- Background: Slate-900 (#0f172a)
+- Surface: Slate-800 (#1e293b)
 
-### 3. Products Management
-- Add/Edit/Delete products
-- Barcode assignment
-- Category management
-- Price updates
-- Image upload
-
-### 4. Reports
-- Daily/Weekly/Monthly sales
-- Product performance
-- Category breakdown
-- Export to PDF/Excel
-
-### 5. Settings
-- Printer setup (COM port, test print)
-- Scanner enable/disable
-- Tax rate (default 15% for Saudi)
-- Store info (name, address, VAT number)
-- Backup/Restore database
+---
 
 ## Hardware Integration
 
 ### Barcode Scanner (HID Keyboard Wedge)
-- Works as keyboard input
 - Auto-detect: rapid character input + Enter
-- Sound feedback on successful scan
+- Sound feedback (1400Hz beep)
+- Haptic feedback on mobile
 - Supports: EAN-13, UPC-A, Code 128, QR
 
 ### Receipt Printer (EPSON TM-T81)
 - USB Serial (COM port emulation)
 - ESC/POS commands
 - Paper width: 80mm
-- Support: Text, Barcode, QR, Logo
+- Support: Text, Bold, Alignment, Cut
 
-### Receipt Format
-```
-================================
-        اسم المطعم
-        العنوان
-        VAT: XXXXXXXXX
-================================
-Date: 21/04/2026    Time: 02:45 PM
-Order #: 004
---------------------------------
-Qty   Item         Price    Total
---------------------------------
- 2    شاي أخضر     3.00     6.00
- 1    هامبرغر     18.00    18.00
---------------------------------
-Subtotal:                  24.00
-VAT 15%:                    3.60
-================================
-TOTAL:              27.60 SAR
-================================
-Payment: Cash
-================================
-        شكراً لزيارتكم!
-================================
+### Camera Scanner
+- Html5Qrcode library
+- Environment-facing camera
+- 10 FPS, 250x150 scan area
+- Auto-stop after successful scan
 
-        [BARCODE]
-```
+---
 
-## Features
-
-### Core POS
-- [x] Category navigation
-- [x] Product grid with images
-- [x] Add to order (tap or scan)
-- [x] Quantity adjustment (+/-)
-- [x] Remove item from order
-- [x] Order total with VAT
-- [x] Payment (Cash/Card)
-- [x] Receipt printing
-
-### Scanner Integration
-- [x] Auto-detect barcode input
-- [x] Add scanned item to order
-- [x] If not found → prompt to add product
-- [x] Sound feedback
-
-### Printer Integration
-- [x] ESC/POS driver
-- [x] Print receipt on payment
-- [x] Kitchen ticket option (future)
-- [x] Test print from settings
-
-### Inventory
-- [x] Product CRUD
-- [x] Category management
-- [x] Stock tracking (qty)
-- [x] Low stock alerts
-
-### Reports
-- [x] Daily sales report
-- [x] Product sales ranking
-- [x] Category breakdown
-- [x] Date range filter
-
-### Settings
-- [x] Store information
-- [x] Printer configuration
-- [x] Tax rate
-- [x] Database backup/restore
-- [x] RTL/LTR toggle
-
-## Saudi-Specific
-- RTL Arabic interface
+## Saudi/Kuwaiti-Specific
+- RTL Arabic interface (direction: rtl)
+- Kuwaiti Dinar (KWD) currency
+- Currency symbol: د.ك
 - VAT 15% calculation
-- SAR currency
 - Arabic product names
-- Islamic date support (optional)
-- نمط الحروف العربي
+- Tajawal Google Font
+- Islamic date support (future)
+
+---
 
 ## Build & Distribution
 - Windows x64 executable (.exe)
-- Installer: NSIS
+- NSIS installer
+- Auto-update support ready
+- APK for Android (via Capacitor)
 - Portable version available
-- Auto-update support
