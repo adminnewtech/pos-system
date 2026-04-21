@@ -1,0 +1,64 @@
+{
+  "name": "pos-system",
+  "version": "1.0.0",
+  "description": "POS System - Saudi Restaurant Edition",
+  "main": "dist/main/main.js",
+  "author": "Khaled Alr",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
+    "dev:vite": "npx vite",
+    "dev:electron": "wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .",
+    "build": "npm run build:vite && npm run build:electron",
+    "build:vite": "npx vite build",
+    "build:electron": "npx tsc -p tsconfig.main.json",
+    "dist": "npm run build && npx electron-builder",
+    "rebuild": "npx electron-rebuild -f -w better-sqlite3"
+  },
+  "build": {
+    "appId": "com.newtech.pos",
+    "productName": "POS Saudi",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "electron-log": "^5.1.7"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.6.0",
+    "autoprefixer": "^10.4.20",
+    "better-sqlite3": "^11.3.0",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
+    "postcss": "^8.4.49",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^6.0.3",
+    "vite": "^5.4.18",
+    "@vitejs/plugin-react": "^4.3.4",
+    "wait-on": "^8.0.1"
+  }
+}

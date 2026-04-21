@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Tajawal', Arial, sans-serif;
+  direction: rtl;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #1a1a2e;
+  color: #e2e8f0;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3b82f6;
+  border-radius: 3px;
+}
+
+/* POS Button Styles */
+.pos-btn {
+  @apply px-4 py-2 rounded-lg font-bold transition-all duration-200;
+  @apply active:scale-95;
+}
+
+.pos-btn-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white;
+}
+
+.pos-btn-success {
+  @apply bg-emerald-600 hover:bg-emerald-700 text-white;
+}
+
+.pos-btn-danger {
+  @apply bg-red-600 hover:bg-red-700 text-white;
+}
+
+.pos-btn-secondary {
+  @apply bg-gray-600 hover:bg-gray-700 text-white;
+}
+
+/* Category Button */
+.cat-btn {
+  @apply w-full py-3 px-4 rounded-lg text-right font-medium transition-all duration-200;
+  @apply hover:scale-105 active:scale-95;
+}
+
+.cat-btn.active {
+  @apply ring-2 ring-blue-400;
+}
+
+/* Product Card */
+.product-card {
+  @apply bg-gray-800 rounded-xl p-4 cursor-pointer transition-all duration-200;
+  @apply hover:bg-gray-700 hover:scale-105 active:scale-95;
+  @apply border-2 border-transparent hover:border-blue-500;
+}
+
+.product-card.selected {
+  @apply border-blue-500 bg-gray-700;
+}
+
+/* Order Item */
+.order-item {
+  @apply flex items-center justify-between py-2 border-b border-gray-700;
+}
+
+.order-item:last-child {
+  @apply border-b-0;
+}
