@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,79 +7,96 @@
 :root {
   font-family: 'Tajawal', Arial, sans-serif;
   direction: rtl;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background: #1a1a2e;
+  background: #0f172a;
   color: #e2e8f0;
   overflow: hidden;
   user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  font-family: 'Tajawal', Arial, sans-serif;
+}
+
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
+  height: 4px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #1a1a2e;
+  background: #1e293b;
+}
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 2px;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #3b82f6;
-  border-radius: 3px;
+/* Mobile-safe areas */
+.safe-area-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+.safe-area-top {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
 }
 
 /* POS Button Styles */
 .pos-btn {
-  @apply px-4 py-2 rounded-lg font-bold transition-all duration-200;
-  @apply active:scale-95;
+  @apply transition-all duration-200;
+  -webkit-tap-highlight-color: transparent;
+}
+.pos-btn:active {
+  transform: scale(0.95);
 }
 
-.pos-btn-primary {
-  @apply bg-blue-600 hover:bg-blue-700 text-white;
+/* Animations */
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-in {
+  animation: slideIn 0.25s ease-out;
 }
 
-.pos-btn-success {
-  @apply bg-emerald-600 hover:bg-emerald-700 text-white;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
 }
 
-.pos-btn-danger {
-  @apply bg-red-600 hover:bg-red-700 text-white;
+/* Focus states for accessibility */
+button:focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+}
+input:focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 0;
 }
 
-.pos-btn-secondary {
-  @apply bg-gray-600 hover:bg-gray-700 text-white;
+/* Toggle switch */
+.toggle-switch {
+  @apply relative w-12 h-7 rounded-full transition-colors;
 }
-
-/* Category Button */
-.cat-btn {
-  @apply w-full py-3 px-4 rounded-lg text-right font-medium transition-all duration-200;
-  @apply hover:scale-105 active:scale-95;
-}
-
-.cat-btn.active {
-  @apply ring-2 ring-blue-400;
-}
-
-/* Product Card */
-.product-card {
-  @apply bg-gray-800 rounded-xl p-4 cursor-pointer transition-all duration-200;
-  @apply hover:bg-gray-700 hover:scale-105 active:scale-95;
-  @apply border-2 border-transparent hover:border-blue-500;
-}
-
-.product-card.selected {
-  @apply border-blue-500 bg-gray-700;
-}
-
-/* Order Item */
-.order-item {
-  @apply flex items-center justify-between py-2 border-b border-gray-700;
-}
-
-.order-item:last-child {
-  @apply border-b-0;
+.toggle-switch-thumb {
+  @apply absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform;
 }
